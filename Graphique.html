@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graphique</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 24px;
+      color: #222;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-container h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+    .chart-wrapper {
+      height: 260px;
+      position: relative;
+    }
+
+    .chart-wrapper canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card chart-container">
+    <h2>Essai de graphique</h2>
+    <div class="chart-wrapper">
+      <canvas id="valeursChart"></canvas>
+    </div>
+     <div class="chart-wrapper">
+      <canvas id="valeursChart1"></canvas>
+    </div>
+  </div>
+
+  <script src="chart.js"></script>
+  <script>
+    const donneesGraphique = [
+      { type: "Rouge", valeur: 10 },
+      { type: "Bleu", valeur: 15 },
+      { type: "Vert", valeur: 7 },
+      { type: "Jaune", valeur: 12 }
+    ];
+   const donneesGraphique1 = [
+  { type: "Rouge", valeur2025: 10, valeur2026: 12, valeur2027: 14, valeur2028: 16 },
+  { type: "Bleu", valeur2025: 15, valeur2026: 18, valeur2027: 17, valeur2028: 20 },
+  { type: "Vert", valeur2025: 7, valeur2026: 9, valeur2027: 11, valeur2028: 10 },
+  { type: "Jaune", valeur2025: 12, valeur2026: 14, valeur2027: 13, valeur2028: 15 }
+];
+
+
+    const valeursChartCanvas = document.getElementById("valeursChart");
+    // Dans le document HTML, cherche l’élément qui a l’identifiant valeursChart,
+    // puis mets-le dans une variable appelée valeursChartCanvas.
+    const valeursChartCanvas1 = document.getElementById("valeursChart1");
+    if (valeursChartCanvas) {
+      new Chart(valeursChartCanvas, {
+        // Crée un graphique dans ce canvas, avec les données suivantes :     
+      
+        type: "bar",
+        data: {
+        //ici, data est un mot attendu par Chart.js.
+        // C’est la partie de configuration qui dit :
+        // voici les données à afficher dans le graphique.
+          labels: donneesGraphique.map((point) => point.type),
+          // point est un nom temporaire donné à chaque élément du tableau pendant que .map() le parcourt.
+          // On aurait pu l’appeler autrement :
+          // donneesGraphique.map((element) => element.type)
+          // ou :
+          // donneesGraphique.map((couleur) => couleur.type)
+          // Ça ferait exactement la même chose.
+          // point n’est pas un mot spécial de JavaScript, c’est juste un nom choisi par nous.
+          datasets: [
+            // datasets veut dire : les séries de données à afficher dans le graphique.
+            //  c’est un tableau [...], parce qu’un graphique peut afficher plusieurs séries.
+            // Dans ton cas, il n’y en a qu’une seule :
+            {
+              label: "Valeur",
+              data: donneesGraphique.map((point) => point.valeur),
+              backgroundColor: ["#dc2626", "#2563eb", "#16a34a", "#eab308"],
+              borderWidth: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    if (valeursChartCanvas1) {
+      new Chart(valeursChartCanvas1, {
+        // Crée un graphique dans ce canvas, avec les données suivantes :     
+      
+        type: "bar",
+        data: {
+          labels: donneesGraphique1.map((point) => point.type),
+          datasets: [
+            {
+              label: "Valeurs 2025",
+              data: donneesGraphique1.map((point) => point.valeur2025),
+              backgroundColor: "#2563eb"
+            },
+            {
+              label: "Valeurs 2026",
+              data: donneesGraphique1.map((point) => point.valeur2026),
+              backgroundColor: "#16a34a"
+            },
+       
+            {
+              label: "Valeurs 2027",
+              data: donneesGraphique1.map((point) => point.valeur2027),
+              backgroundColor: "#eab308"
+            },
+            {
+              label: "Valeurs 2028",
+              data: donneesGraphique1.map((point) => point.valeur2028),
+              backgroundColor: "#dc2626"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+  </script>
+</body>
+
+</html>

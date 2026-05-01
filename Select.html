@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background:
+      radial-gradient(circle at top left, #fff7ec 0, #fff7ec 18%, transparent 18%),
+      linear-gradient(180deg, #f8f1e8 0%, var(--bg) 100%);
+    color: var(--text);
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 10px 24px rgba(53, 41, 30, 0.07);
+  }
+
+  .category-panel {
+    /* /* Le panel de catégorie utilise une disposition en colonne avec un espacement de 10px
+     entre les éléments  */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    width: 400px;
+
+  }
+
+  .category-panel1 {
+    /* Le panel de catégorie utilise une disposition en colonne avec un espacement de 10px
+     entre les éléments  */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+    width: 600px;
+  }
+
+
+  .category-panel select {
+    width: 240px;
+    max-width: 100%;
+  }
+
+  .category-add-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .category-add-row input {
+    flex: 1;
+  }
+
+  .category-panel1 ul, ol {
+  text-align: left;
+}
+
+</style>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Essai de select</title>
+</head>
+
+
+<body>
+  <div class="panel category-panel">
+    <label for="itemCategory">Catégorie</label>
+    <select id="itemCategory"></select>
+    <div class="category-add-row">
+      <input id="newCategory" type="text" placeholder="Nouvelle catégorie" />
+      <button id="addCategoryBtn" type="button" class="primary-btn">Ajouter catégorie</button>
+    </div>
+    <button id="removeCategoryBtn" type="button" class="secondary-btn category-remove-btn">Supprimer</button>
+  </div>
+  <div class="panel category-panel1">
+      <ul>
+        <li>span = petit morceau de texte</li>
+        <li>p = paragraphe</li>
+        <li>label = texte lié à un champ</li>
+        <li>section = partie de page</li>
+      </ul>
+<ol>
+<li>&lt;ol&gt; = liste ordonnée, avec numéros</li>
+<li>&lt;li&gt; = toujours les éléments de la liste</li>
+<li>&lt;ul&gt; = liste non ordonnée, avec des puces</li>
+<li>&lt;dl&gt; = liste de définitions, avec des termes et des descriptions</li>
+<li>&lt;dt&gt; = terme dans une liste de définitions</li>
+<li>&lt;dd&gt; = description dans une liste de définitions</li>
+</ol>
+  </div>
+  <script>
+    const categoriesKey = "select-categories";
+    const defaultCategories = [
+      "Fruits et légumes",
+      "Produits frais",
+      "Épicerie",
+      "Boissons",
+      "Maison",
+      "Autre"
+    ];
+
+    const itemCategoryInput = document.getElementById("itemCategory");
+    const newCategoryInput = document.getElementById("newCategory");
+    const addCategoryBtn = document.getElementById("addCategoryBtn");
+    const removeCategoryBtn = document.getElementById("removeCategoryBtn");
+
+    let categories = chargerCategories();
+    // La fonction chargerCategories() récupère les catégories enregistrées dans le localStorage,
+    // les analyse et les retourne sous forme de tableau. 
+    // Si aucune catégorie n’est trouvée ou si une erreur se produit lors de l’analyse,
+    //  elle retourne un tableau de catégories par défaut.  
+    function chargerCategories() {
+      // Récupère les catégories enregistrées dans le localStorage en utilisant la clé 
+      // définie dans categoriesKey.
+      const savedCategories = localStorage.getItem(categoriesKey);
+      // Si aucune catégorie n’est trouvée (savedCategories est null), 
+      // retourne une copie du tableau defaultCategories.
+      if (!savedCategories) {
+        return [...defaultCategories];
+      }
+      // Si des catégories sont trouvées, tente de les analyser en JSON. 
+      try {
+        const parsedCategories = JSON.parse(savedCategories);
+        // Vérifie si le résultat de l’analyse est un tableau 
+        // et s’il contient au moins une catégorie.  
+        return Array.isArray(parsedCategories) && parsedCategories.length > 0
+          ? parsedCategories
+          : [...defaultCategories];
+        // Si l’analyse échoue ou si le résultat n’est pas un tableau valide,
+        // retourne une copie du tableau defaultCategories.
+      } catch (error) {
+        // En cas d’erreur lors de l’analyse JSON, affiche une erreur dans la console et 
+        // retourne une copie du tableau defaultCategories.
+        return [...defaultCategories];
+      }
+    }
+
+    function sauvegarderCategories() {
+      localStorage.setItem(categoriesKey, JSON.stringify(categories));
+    }
+
+    function afficherCategories(selectedCategory = itemCategoryInput.value) {
+      categories.sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+      itemCategoryInput.innerHTML = "";
+
+      categories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        itemCategoryInput.appendChild(option);
+      });
+
+      if (categories.includes(selectedCategory)) {
+        itemCategoryInput.value = selectedCategory;
+      } else if (categories.length > 0) {
+        itemCategoryInput.value = categories[0];
+      }
+
+      mettreAJourBoutonSuppression();
+    }
+
+    function mettreAJourBoutonSuppression() {
+      const selectedCategory = itemCategoryInput.value;
+      removeCategoryBtn.textContent = selectedCategory
+        ? `Supprimer : ${selectedCategory}`
+        : "Supprimer";
+    }
+
+    function supprimerCategorieSelectionnee() {
+      const selectedCategory = itemCategoryInput.value;
+
+      if (!selectedCategory) {
+        return;
+      }
+
+      categories = categories.filter((category) => category !== selectedCategory);
+      if (categories.length === 0) {
+        categories = [...defaultCategories];
+      }
+      sauvegarderCategories();
+      afficherCategories(categories[0]);
+    }
+
+    function ajouterCategorie() {
+      const newCategory = newCategoryInput.value.trim();
+
+      if (!newCategory) {
+        return;
+      }
+
+      const existingCategory = categories.find(
+        (category) => category.toLowerCase() === newCategory.toLowerCase()
+      );
+
+      if (existingCategory) {
+        itemCategoryInput.value = existingCategory;
+        newCategoryInput.value = "";
+        return;
+      }
+
+      categories.push(newCategory);
+      categories.sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
+      sauvegarderCategories();
+      afficherCategories(newCategory);
+      newCategoryInput.value = "";
+      newCategoryInput.focus();
+    }
+
+    removeCategoryBtn.addEventListener("click", () => {
+      supprimerCategorieSelectionnee();
+    });
+
+    addCategoryBtn.addEventListener("click", () => {
+      ajouterCategorie();
+    });
+
+    itemCategoryInput.addEventListener("change", () => {
+      mettreAJourBoutonSuppression();
+    });
+
+    newCategoryInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        ajouterCategorie();
+      }
+    });
+
+    sauvegarderCategories();
+    afficherCategories(categories[0]);
+  </script>
+</body>

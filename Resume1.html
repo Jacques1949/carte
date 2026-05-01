@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<head>
+  <html lang="fr">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculateur nPNA - Dialyse péritonéale</title>
+  <style>
+
+      /* Sélecteur	Exemple CSS	Cible
+      balise	button {}	tous les <button>
+      classe	.results {}	tous les éléments avec class="results"
+      id	#weight {}	l’élément avec id="weight"
+      plusieurs éléments	input, button {}	tous les <input> et tous les <button>
+      élément dans un autre	.card span {}	tous les <span> à l’intérieur de .card */
+
+
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+
+      /* padding: 24px; ajoute un espace intérieur de 24 pixels tout autour du contenu de l’élément.
+
+      Ça veut dire :
+
+      24px en haut
+      24px à droite
+      24px en bas
+      24px à gauche
+
+      Le contenu dans .card ne colle pas au bord de la boîte, il respire davantage.
+
+      Différence importante :
+
+      padding = espace à l’intérieur
+      margin = espace à l’extérieur
+      Donc padding: 24px; agrandit l’espace entre le bord de l’élément et ce qu’il contient. */
+
+              padding: 24px;
+
+      /* color: #222;
+        définit la couleur du texte. #222 est un gris très foncé, presque noir. Donc si tu mets :
+        css
+        body {
+          color: #222;
+        }
+        tout le texte du body héritera de cette couleur, sauf si une autre règle CSS la remplace plus bas.
+        Petit rappel :
+        color = couleur du texte
+        background ou background-color = couleur de fond */
+
+      color: #222;
+    }
+
+    .card {
+      background: yellow;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+
+    button {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    .results {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f0f6ff;
+      border-radius: 10px;
+    }
+
+    .result-line {
+      margin: 8px 0;
+      font-size: 1rem;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .warning {
+      margin-top: 12px;
+      color: #8a4b00;
+      background: #fff4e5;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .input-preview {
+      margin-top: -4px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+      color: #444;
+    }
+
+    .chart-container {
+      margin-top: 12px;
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 10px;
+    }
+
+    .chart-container h2 {
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .chart-wrapper {
+      height: 140px;
+      position: relative;
+    }
+
+    .chart-wrapper canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Essais</h1>
+    <div class="card">
+      <label for="weight">Poids de référence (kg)</label>
+      <input id="weight" type="number" step="0.1" min="1" placeholder="Ex: 70" style="width: 45px;" value="70" />
+
+      <label for="multiplicateur">Multiplicateur</label>
+      <input id="multiplicateur" type="number" step="0.1" min="0.1" value="1" placeholder="Ex: 2" style="width: 100px;"
+        value="1" />
+    </div>
+
+    <div class="card">
+      <!-- Le span sert à entourer uniquement la partie qui va changer dynamiquement (zone que JavaScript peut remplacer) -->
+      Valeur saisie : <span id="weightDisplay">-</span>
+      <span style="margin-left: 30px;">
+        Affichage : <span id="affichage">-</span>
+      </span>
+    </div>
+
+    <div class="card chart-container">
+      <h2>Graphique des valeurs</h2>
+      <div class="chart-wrapper">
+        <canvas id="valeursChart"></canvas>
+      </div>
+    </div>
+
+    <script src="chart.js"></script>
+    <script>
+
+      const weightInput = document.getElementById("weight");
+      const weightDisplay = document.getElementById("weightDisplay");
+      const affichage = document.getElementById("affichage");
+      const multiplicateurInput = document.getElementById("multiplicateur");
+
+      function updateWeightDisplay() {
+        if (!weightInput || !weightDisplay) return;
+        const value = weightInput.value.trim();
+        const resultat = round(value, 1);
+        weightDisplay.textContent = value ? `${resultat} kg` : "-";
+        affichage.textContent = value ? `${(value * multiplicateurInput.value).toLocaleString("fr-FR")}` : "-";
+      }
+
+      if (weightInput) {
+        weightInput.addEventListener("input", updateWeightDisplay);
+      }
+      updateWeightDisplay();
+
+      if (multiplicateurInput) {
+        multiplicateurInput.addEventListener("input", updateWeightDisplay);
+      }
+      updateWeightDisplay();
+
+      function round(value, digits = 2) {
+        return Number(value).toFixed(digits);
+      }
+
+      const donneesGraphique = [
+        { date: "2026-01-01", valeur: 70.5 },
+        { date: "2026-02-01", valeur: 71.2 },
+        { date: "2026-03-01", valeur: 69.8 },
+        { date: "2026-04-01", valeur: 72.4 },
+        { date: "2026-05-01", valeur: 71.0 },
+        { date: "2026-06-01", valeur: 70.3 }
+      ];
+
+      const valeursChartCanvas = document.getElementById("valeursChart");
+      // Cherche dans la page HTML l’élément qui a l’identifiant valeursChart, puis garde-le dans une constante appelée valeursChartCanvas.
+      // document représente toute la page HTML.
+
+      if (valeursChartCanvas) {
+        // Si l’élément valeursChartCanvas existe bien, alors exécute le code entre les accolades { ... }.
+      //  “Avant de créer le graphique, vérifie qu’on a bien trouvé l’endroit où le dessiner.”
+
+        new Chart(valeursChartCanvas, {
+          // On crée un nouveau graphique Chart.js.
+          // new Chart(...) veut dire : créer un nouvel objet graphique.
+          // valeursChartCanvas est l’endroit où le graphique sera dessiné.
+          // Le deuxième argument { ... } contient la configuration du graphique.
+          type: "line",
+          // ici, on choisit le type de graphique.
+          // "line" signifie : graphique en ligne, donc une courbe.
+          data: {
+            // Cette partie décrit les données à afficher.
+            labels: donneesGraphique.map((point) => point.date),
+            // Cette ligne crée les étiquettes de l’axe horizontal.
+            // Ton tableau contient ceci :
+            // { date: "2026-01-01", valeur: 70.5 }
+            // Avec .map((point) => point.date), JavaScript récupère seulement les dates :
+            // ["2026-01-01", "2026-02-01", "2026-03-01", ...]
+            // Ces dates seront affichées en bas du graphique.
+            datasets: [
+            //datasets signifie “séries de données”.
+            // Un graphique peut afficher une ou plusieurs séries. Par exemple :
+            // poids
+            // tension
+            // température
+            // glycémie
+            // Ici, il n’y a qu’une seule série.
+              {
+                label: "Valeur",
+                // C’est le nom de la courbe. Il apparaît dans la légende du graphique.
+                data: donneesGraphique.map((point) => point.valeur),
+                // Cette ligne récupère les valeurs numériques :
+                //[70.5, 71.2, 69.8, 72.4, 71.0, 70.3]
+                // Ces valeurs seront placées sur l’axe vertical.
+                borderColor: "#2563eb",
+                // Couleur de la ligne du graphique. Ici, c’est du bleu.
+                backgroundColor: "rgba(37, 99, 235, 0.15)",
+                // Couleur de remplissage sous la courbe.
+                // rgba signifie :
+                // rouge, vert, bleu, transparence
+                // Le 0.15 rend la couleur très transparente.
+                borderWidth: 2,
+                // Épaisseur de la ligne.
+                pointRadius: 4,
+                // Taille des points sur la courbe.
+                tension: 0.25,
+                // Arrondit légèrement la courbe.
+                // 0 : lignes droites entre les points
+                // 0.25 : courbe légèrement adoucie
+                // 1 : très arrondi
+                fill: true
+                // Remplit la zone sous la courbe avec la couleur backgroundColor.
+              }
+            ]
+          },
+          options: {
+            // Ici, on règle le comportement et l’apparence générale du graphique.
+            responsive: true,
+            // Le graphique s’adapte à la largeur disponible.
+            maintainAspectRatio: false,
+            // Très important dans ton cas.
+            // Par défaut, Chart.js garde un ratio largeur/hauteur automatique, ce qui peut rendre le graphique trop haut. Avec false, on lui dit :
+            // respecte plutôt la hauteur CSS donnée par le conteneur.
+            // C’est pour ça qu’on peut contrôler la hauteur avec :
+            // .chart-wrapper {
+            //   height: 110px;
+            // }
+            scales: {
+              // Ça configure l’axe vertical y.
+              y: {
+                beginAtZero: false
+              }
+              // signifie que l’axe vertical ne commence pas forcément à zéro.
+              // Dans ton exemple, les valeurs sont autour de 70. Si l’axe commençait à 0, la courbe serait très écrasée. Avec false, Chart.js peut commencer l’axe autour de 69, 70, etc., ce qui rend les variations plus visibles.
+            }
+          }
+        });
+      }
+
+    </script>
+</body>
+
+</html>

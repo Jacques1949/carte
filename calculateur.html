@@ -1,0 +1,222 @@
+		<!DOCTYPE html>
+	<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculateur nPNA - Dialyse péritonéale</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.6rem;
+    }
+
+    h2 {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input, select, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    .results {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f0f6ff;
+      border-radius: 10px;
+    }
+
+    .result-line {
+      margin: 8px 0;
+      font-size: 1rem;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 16px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .warning {
+      margin-top: 12px;
+      color: #8a4b00;
+      background: #fff4e5;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Calculateur nPNA - Dialyse péritonéale</h1>
+
+    <div class="row">
+      <label for="mode">Mode de calcul</label>
+      <select id="mode">
+        <option value="direct">Saisie directe de UNA / TNA (g/j)</option>
+        <option value="urea">Calcul à partir de l'urée dialysat + urine (mmol/j)</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label for="weight">Poids de référence (kg)</label>
+      <input id="weight" type="number" step="0.1" min="1" placeholder="Ex: 70" />
+    </div>
+
+    <div id="directMode">
+      <div class="row">
+        <label for="unaDirect">UNA / TNA utilisé pour le calcul (g/j)</label>
+        <input id="unaDirect" type="number" step="0.01" min="0" placeholder="Ex: 8.5" />
+      </div>
+    </div>
+
+    <div id="ureaMode" class="hidden">
+      <div class="row">
+        <label for="dialysateUrea">Urée dialysat 24 h (mmol/j)</label>
+        <input id="dialysateUrea" type="number" step="0.1" min="0" placeholder="Ex: 320" />
+      </div>
+
+      <div class="row">
+        <label for="urineUrea">Urée urinaire 24 h (mmol/j)</label>
+        <input id="urineUrea" type="number" step="0.1" min="0" placeholder="Ex: 120" />
+      </div>
+    </div>
+
+    <button onclick="calculate()">Calculer</button>
+
+    <div class="results" id="results">
+      <div class="result-line"><strong>UNA retenu :</strong> <span id="resUNA">-</span></div>
+      <div class="result-line"><strong>PNA :</strong> <span id="resPNA">-</span></div>
+      <div class="result-line"><strong>nPNA :</strong> <span id="resNPNA">-</span></div>
+      <div class="result-line"><strong>Interprétation :</strong> <span id="resInterpretation">-</span></div>
+    </div>
+
+    <div class="warning">
+      Formule utilisée :
+      <br />
+      <strong>PNA (g/j) = 10.76 × (0.69 × UNA + 1.46)</strong>
+      <br />
+      <strong>nPNA (g/kg/j) = PNA / poids</strong>
+    </div>
+
+    <p class="small">
+      Remarque : dans le mode "urée dialysat + urine", on fait une approximation pratique :
+      <br />
+      <strong>UNA (g/j) = (urée dialysat mmol/j + urée urine mmol/j) × 0.028</strong>
+      <br />
+      car 1 mmol d'urée contient environ 28 mg d'azote uréique.
+    </p>
+  </div>
+
+  <script>
+    const modeSelect = document.getElementById("mode");
+    const directMode = document.getElementById("directMode");
+    const ureaMode = document.getElementById("ureaMode");
+
+    modeSelect.addEventListener("change", () => {
+      if (modeSelect.value === "direct") {
+        directMode.classList.remove("hidden");
+        ureaMode.classList.add("hidden");
+      } else {
+        directMode.classList.add("hidden");
+        ureaMode.classList.remove("hidden");
+      }
+    });
+
+    function round(value, digits = 2) {
+      return Number(value).toFixed(digits);
+    }
+
+    function interpretNPNA(npna) {
+      if (npna < 0.8) return "Bas, possible risque de dénutrition";
+      if (npna < 1.0) return "Légèrement bas";
+      if (npna <= 1.2) return "Zone habituellement attendue";
+      if (npna <= 1.4) return "Correct à élevé";
+      return "Élevé, à interpréter selon le contexte clinique";
+    }
+
+    function calculate() {
+      const mode = modeSelect.value;
+      const weight = parseFloat(document.getElementById("weight").value);
+
+      if (isNaN(weight) || weight <= 0) {
+        alert("Merci de saisir un poids valide.");
+        return;
+      }
+
+      let una;
+
+      if (mode === "direct") {
+        una = parseFloat(document.getElementById("unaDirect").value);
+
+        if (isNaN(una) || una < 0) {
+          alert("Merci de saisir une valeur UNA / TNA valide.");
+          return;
+        }
+      } else {
+        const dialysateUrea = parseFloat(document.getElementById("dialysateUrea").value) || 0;
+        const urineUrea = parseFloat(document.getElementById("urineUrea").value) || 0;
+
+        if (dialysateUrea < 0 || urineUrea < 0) {
+          alert("Les valeurs d'urée doivent être positives.");
+          return;
+        }
+
+        // Approximation : mmol/j d'urée -> g/j d'azote uréique
+        una = (dialysateUrea + urineUrea) * 0.028;
+      }
+
+      const pna = 10.76 * (0.69 * una + 1.46);
+      const npna = pna / weight;
+
+      document.getElementById("resUNA").textContent = `${round(una)} g/j`;
+      document.getElementById("resPNA").textContent = `${round(pna)} g/j`;
+      document.getElementById("resNPNA").textContent = `${round(npna)} g/kg/j`;
+      document.getElementById("resInterpretation").textContent = interpretNPNA(npna);
+    }
+  </script>
+</body>
+</html>
