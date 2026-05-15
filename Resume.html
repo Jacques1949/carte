@@ -3,12 +3,12 @@
 <head>
 
   <html lang="fr">
-    // La balise meta charset="UTF-8" indique que le document HTML utilise l’encodage de caractères UTF-8,
+    <!-- // La balise meta charset="UTF-8" indique que le document HTML utilise l’encodage de caractères UTF-8,
     // qui est un standard pour représenter les caractères de la plupart des langues du monde,
     // y compris les caractères accentués utilisés en français. Cela permet d’afficher correctement
-    // les caractères spéciaux et les accents dans le navigateur.
+    // les caractères spéciaux et les accents dans le navigateur. -->
   <meta charset="UTF-8" />
-  // La balise meta viewport est utilisée pour contrôler la mise en page sur les appareils mobiles.
+  <!-- // La balise meta viewport est utilisée pour contrôler la mise en page sur les appareils mobiles. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calculateur nPNA - Dialyse péritonéale</title>
   <style>
@@ -190,7 +190,7 @@
   <div class="card">
     <!-- // Le label est associé à l’input grâce à l’attribut for="weight" qui correspond à l’id de l’input.
     <h1>Essais</h1> -->
-    <div class="card">
+    <!-- <div class="card">
       <label for="weight">Poids de référence (kg)</label>
       <input id="weight" type="number" step="0.1" min="1" placeholder="Ex: 70" style="width: 45px;" value="70" />
 
@@ -199,15 +199,15 @@
         value="1" />
     </div>
 
-    <div class="card">
+    <div class="card"> -->
       <!-- Le span sert à entourer uniquement la partie qui va changer dynamiquement (zone que JavaScript peut remplacer) -->
       Valeur saisie : <span id="weightDisplay">-</span>
-      <span style="margin-left: 30px;">
+      <!-- <span style="margin-left: 30px;">
         Affichage : <span id="affichage">-</span>
       </span>
-    </div>
+    </div> -->
 
-    //
+    
     <div class="card chart-container">
       <h2>Evolution du poids</h2>
       <div class="chart-wrapper">
@@ -215,7 +215,7 @@
       </div>
     </div>
 
-    //
+    
     <div class="card weight-tracker">
       <h2>Ajouter une mesure</h2>
       <div class="tracker-form">
