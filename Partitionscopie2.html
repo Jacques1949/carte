@@ -1,0 +1,652 @@
+<!doctype html>
+<meta charset="UTF-8" />
+<script src="https://cdn.jsdelivr.net/npm/idb@3.0.2/build/idb.min.js"></script>
+
+<style>
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 12px;
+    }
+
+    body {
+        display: flex;
+        gap: 12px;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    #leftPane {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    #controls {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        /* display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: flex-start; */
+    }
+
+    #importBaseInput {
+        display: none;
+    }
+
+    .fileButton {
+        display: inline-block;
+        padding: 2px 8px;
+        border: 1px solid rgb(118, 118, 118);
+        border-radius: 2px;
+        background-color: rgb(239, 239, 239);
+        color: black;
+        font: 13.3333px Arial;
+        cursor: pointer;
+    }
+
+    .fileButton:hover {
+        background-color: rgb(229, 229, 229);
+    }
+
+    #utilitiesPanel {
+        display: none;
+        margin-top: 8px;
+    }
+
+    #utilitiesPanel.visible {
+        display: block;
+    }
+
+    #notePane {
+        width: 50%;
+        min-width: 280px;
+        display: flex;
+    }
+
+    #noteInput {
+        flex: 1;
+        width: 100%;
+        min-width: 0;
+        min-height: 120px;
+        resize: none;
+    }
+
+    #editBookFields {
+        display: flex;
+        gap: 8px;
+    }
+
+    #editBookFields[hidden] {
+        display: none;
+    }
+
+    #notesElem {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        background-color: rgb(240, 240, 240);
+        padding: 12px;
+    }
+
+    .noteText {
+        margin-bottom: 8px;
+    }
+
+    .noteEditor {
+        width: 100%;
+        min-height: 220px;
+        margin-bottom: 8px;
+        resize: vertical;
+    }
+
+    .noteActions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+</style>
+<div id="leftPane">
+    <div id="controls">
+        <div id="entete">
+            <button onclick="toggleUtilities()">Utilitaires</button>
+            <div id="utilitiesPanel">
+                <button onclick="clearBooks()">Effacer la base de données</button>
+                <button onclick="exporterBase()">Exporter la base</button>
+                <label class="fileButton" for="importBaseInput">Choisir la base à importer</label>
+                <input id="importBaseInput" type="file" accept=".json" onchange="importerBase(event)">
+            </div>
+        </div>
+        <button onclick="addBook()">Ajouter un titre</button>
+        <button onclick="addNote()">Ajouter une partition</button>
+        <div id="entete">
+            <button onclick="scrollerLentement()">Scroller</button>
+
+            <label for="vitesse">Vitesse</label>
+            <input type="range" id="vitesse" min="1" max="10" value="3" oninput="changerVitesseScroll()">
+            <button onclick="stopperScroll()">Stop</button>
+        </div>
+        <input id="bookFilterInput" type="text" placeholder="Filtrer par titre ou auteur" oninput="listBooksInSelect()">
+
+        <select id="bookSelect" onchange="selectBook()">
+            <option value="">Choisir une partition</option>
+        </select>
+
+        <button id="deleteBookButton" onclick="deleteSelectedBook()" hidden>Supprimer le titre</button>
+        <span id="editBookFields" hidden>
+            <input id="titleInput" type="text" placeholder="Titre">
+            <input id="authorInput" type="text" placeholder="Auteur">
+            <button onclick="updateSelectedBook()">Modifier</button>
+        </span>
+        <textarea id="noteInput" placeholder="Note"></textarea>
+    </div>
+</div>
+<div id="notePane">
+    <!-- <p>Books list:</p> -->
+
+    <!-- <ul id="listElem"></ul> -->
+    <ul id="notesElem"></ul>
+</div>
+
+
+<script>
+    let db;
+    let defilement;
+
+    init();
+
+    async function init() {
+        // await : attend que l’ouverture de la base soit terminée avant de continuer.
+        // idb.openDb('booksDb', 1, ...) : ouvre une base IndexedDB appelée booksDb, 
+        // en version 1.
+        // db => { ... } : fonction appelée lors de la création de la base 
+        // ou d’un changement de version.
+        // db.createObjectStore('books', { keyPath: 'name' }) : 
+        // crée un “object store”, l’équivalent d’une table, nommé books.
+        // { keyPath: 'name' } : indique que chaque objet stocké dans books 
+        // utilisera sa propriété name comme clé unique.
+        db = await idb.openDb('partitionsDb', 1, upgradeDb => {
+            if (!upgradeDb.objectStoreNames.contains('books')) {
+                upgradeDb.createObjectStore('books', {
+                    keyPath: 'id',
+                    autoIncrement: true
+                });
+            }
+
+            let notesStore;
+
+            if (!upgradeDb.objectStoreNames.contains('notes')) {
+                notesStore = upgradeDb.createObjectStore('notes', {
+                    keyPath: 'id',
+                    autoIncrement: true
+                });
+            } else {
+                notesStore = upgradeDb.transaction.objectStore('notes');
+            }
+
+            if (!notesStore.indexNames.contains('bookid')) {
+                notesStore.createIndex('bookid', 'bookid');
+            }
+        });
+
+        // En résumé : ce code prépare une base locale dans le navigateur, 
+        // appelée booksDb, avec un espace de stockage books 
+        // où chaque livre est identifié par son champ name.
+        list();
+        listNotes();
+        listBooksInSelect();
+
+    }
+
+    async function list() {
+        // Déclare une fonction asynchrone appelée list.
+        // async veut dire que la fonction peut utiliser await, 
+        // donc attendre le résultat d’une opération asynchrone, 
+        // comme une lecture dans IndexedDB.
+        let tx = db.transaction('books');
+        // Crée une transaction IndexedDB sur le store books.
+        // Une transaction est une opération contrôlée sur la base 
+        // de données. Ici, comme tu ne précises pas 'readwrite', 
+        // c’est une transaction en lecture seule par défaut.
+        let bookStore = tx.objectStore('books');
+        // Récupère l’object store books depuis la transaction.
+        // L’object store, c’est un peu l’équivalent d’une table SQL. 
+        // Ici, il contient tes livres.
+        let books = await bookStore.getAll();
+        // Demande tous les enregistrements du store books.
+        // getAll() lit tous les livres. Comme la lecture est asynchrone,
+        // on utilise await pour attendre que le navigateur ait fini
+        // de lire les données.
+        // À la fin, books contient un tableau d’objets, par exemple :
+        // [
+        //   { id: 1, name: "Dune" },
+        //   { id: 2, name: "Fondation" }
+        // ]
+        // Pour l’instant, ta fonction lit les livres mais ne les affiche 
+        // pas et ne les retourne pas.
+    }
+
+    async function listNotes() {
+        let selectedBookId = Number(bookSelect.value);
+
+        if (!selectedBookId) {
+            // notesElem.innerHTML = '<li>Choisis un livre pour voir ses notes.</li>';
+            updateDeleteBookButton();
+            return;
+        }
+
+        updateDeleteBookButton();
+
+        let tx = db.transaction('notes');
+        let notesStore = tx.objectStore('notes');
+        let bookidIndex = notesStore.index('bookid');
+
+        let notes = await bookidIndex.getAll(selectedBookId);
+
+        if (notes.length) {
+            notesElem.innerHTML = '';
+
+            for (let note of notes) {
+                let li = document.createElement('li');
+                li.style.whiteSpace = 'pre-wrap';
+
+                let text = document.createElement('div');
+                text.className = 'noteText';
+                text.textContent = note.text;
+
+                let actions = document.createElement('div');
+                actions.className = 'noteActions';
+
+                let editButton = document.createElement('button');
+                editButton.textContent = 'Modifier';
+                editButton.onclick = () => editNote(li, note);
+
+                let button = document.createElement('button');
+                button.textContent = 'Supprimer';
+                button.onclick = () => deleteNote(note.id);
+
+                actions.append(editButton, button);
+                li.append(text, actions);
+                notesElem.append(li);
+            }
+
+        } else {
+            notesElem.innerHTML = '<li>Il n\'y a pas de partition pour ce titre.</li>';
+        }
+    }
+
+
+    async function clearBooks() {
+        if (!confirm('Effacer tous les livres ?')) {
+            return;
+        }
+
+        let tx = db.transaction('books', 'readwrite');
+        await tx.objectStore('books').clear();
+        bookSelect.value = '';
+        await list();
+        await listBooksInSelect();
+        await listNotes();
+    }
+
+    function toggleUtilities() {
+        utilitiesPanel.classList.toggle('visible');
+    }
+
+    async function addBook() {
+        let name = prompt("Titre?")?.trim();
+        let auteur = prompt("Auteur?")?.trim();
+
+        if (!name) {
+            alert('Saisis un titre.');
+            return;
+        }
+
+        let tx = db.transaction('books', 'readwrite');
+
+        try {
+            let newBookId = await tx.objectStore('books').add({ name, auteur });
+            await list();
+            await listBooksInSelect();
+            bookSelect.value = newBookId;
+            await loadSelectedBookInForm();
+            await listNotes();
+            updateDeleteBookButton();
+        } catch (err) {
+            if (err.name == 'ConstraintError') {
+                alert("Such book exists already");
+                await addBook();
+            } else {
+                throw err;
+            }
+        }
+    }
+
+    async function addNote() {
+        let bookid = Number(bookSelect.value);
+        let text = noteInput.value.trim();
+
+        if (!bookid) {
+            alert('Choisis un livre avant d’ajouter une partition.');
+            return;
+        }
+
+        if (!text) {
+            alert('Saisis une partition avant de l’ajouter.');
+            return;
+        }
+
+        let tx = db.transaction('notes', 'readwrite');
+
+        try {
+            await tx.objectStore('notes').add({ bookid, text });
+            noteInput.value = '';
+            await listNotes();
+        } catch (err) {
+            if (err.name == 'ConstraintError') {
+                alert("Such book exists already");
+                await addBook();
+            } else {
+                throw err;
+            }
+        }
+    }
+    // Fonction asynchrone qui remplit le <select> avec la liste des livres
+    async function listBooksInSelect() {
+        // Mémorise l'id du livre actuellement sélectionné dans le <select>
+        let selectedBookId = bookSelect.value;
+        // Ouvre une transaction en lecture sur le store "books"
+        let tx = db.transaction('books');
+        // Récupère le store "books" depuis cette transaction
+        let bookStore = tx.objectStore('books');
+        // Récupère tous les livres enregistrés dans IndexedDB
+        let books = await bookStore.getAll();
+        let bookFilter = bookFilterInput.value.trim().toLowerCase();
+
+        books = books.filter(book =>
+            (book.name && book.name.trim()) ||
+            (book.auteur && book.auteur.trim())
+        );
+
+        if (bookFilter) {
+            books = books.filter(book =>
+                (book.name || '').toLowerCase().includes(bookFilter) ||
+                (book.auteur || '').toLowerCase().includes(bookFilter)
+            );
+        }
+
+        // Réinitialise le contenu du <select> avec une option vide 
+        // par défaut
+        bookSelect.innerHTML = '<option value="">Choisir une partition</option>';
+
+        // Ajoute une <option> dans le <select> pour chaque livre trouvé
+        bookSelect.innerHTML += books.map(book => `
+        <option value="${book.id}">
+            ${book.name} - ${book.auteur || 'Auteur inconnu'}
+        </option>
+        `).join('');
+
+        // Vérifie si un livre était sélectionné avant 
+        // le rechargement du <select> et s'il existe encore 
+        // dans la nouvelle liste des livres
+        if (selectedBookId && books.some(book => String(book.id) === selectedBookId)) {
+            // Si oui, on restaure cette sélection
+            bookSelect.value = selectedBookId;
+        }
+
+        updateDeleteBookButton();
+    }
+
+    async function selectBook() {
+        stopperScroll();
+        updateDeleteBookButton();
+        await loadSelectedBookInForm();
+        await listNotes();
+        notesElem.scrollTop = 0;
+    }
+
+    function updateDeleteBookButton() {
+        deleteBookButton.hidden = !bookSelect.value;
+        editBookFields.hidden = !bookSelect.value;
+    }
+
+    async function loadSelectedBookInForm() {
+        let bookid = Number(bookSelect.value);
+
+        if (!bookid) {
+            titleInput.value = '';
+            authorInput.value = '';
+            return;
+        }
+
+        let tx = db.transaction('books');
+        let book = await tx.objectStore('books').get(bookid);
+
+        titleInput.value = book?.name || '';
+        authorInput.value = book?.auteur || '';
+    }
+
+    async function updateSelectedBook() {
+        let bookid = Number(bookSelect.value);
+        let name = titleInput.value.trim();
+        let auteur = authorInput.value.trim();
+
+        if (!bookid) {
+            return;
+        }
+
+        if (!name) {
+            alert('Saisis un titre.');
+            return;
+        }
+
+        let tx = db.transaction('books', 'readwrite');
+        let booksStore = tx.objectStore('books');
+        let book = await booksStore.get(bookid);
+
+        if (!book) {
+            alert('Ce livre n’existe plus.');
+            return;
+        }
+
+        book.name = name;
+        book.auteur = auteur;
+
+        await booksStore.put(book);
+        await tx.complete;
+
+        await list();
+        await listBooksInSelect();
+        bookSelect.value = bookid;
+        await loadSelectedBookInForm();
+        updateDeleteBookButton();
+    }
+
+    async function deleteSelectedBook() {
+        let bookid = Number(bookSelect.value);
+
+        if (!bookid) {
+            return;
+        }
+
+        if (!confirm('Supprimer ce titre et ses partitions ?')) {
+            return;
+        }
+
+        let tx = db.transaction(['books', 'notes'], 'readwrite');
+        let booksStore = tx.objectStore('books');
+        let notesStore = tx.objectStore('notes');
+        let bookidIndex = notesStore.index('bookid');
+
+        let notes = await bookidIndex.getAll(bookid);
+
+        await booksStore.delete(bookid);
+        await Promise.all(notes.map(note => notesStore.delete(note.id)));
+        await tx.complete;
+
+        bookSelect.value = '';
+        await list();
+        await listBooksInSelect();
+        await listNotes();
+    }
+
+    async function deleteNote(id) {
+        let tx = db.transaction('notes', 'readwrite');
+        await tx.objectStore('notes').delete(id);
+        await listNotes();
+    }
+
+    function editNote(li, note) {
+        stopperScroll();
+        li.innerHTML = '';
+
+        let textarea = document.createElement('textarea');
+        textarea.className = 'noteEditor';
+        textarea.value = note.text;
+
+        let actions = document.createElement('div');
+        actions.className = 'noteActions';
+
+        let saveButton = document.createElement('button');
+        saveButton.textContent = 'Enregistrer';
+        saveButton.onclick = () => updateNote(note.id, textarea.value);
+
+        let cancelButton = document.createElement('button');
+        cancelButton.textContent = 'Annuler';
+        cancelButton.onclick = () => listNotes();
+
+        actions.append(saveButton, cancelButton);
+        li.append(textarea, actions);
+        textarea.focus();
+    }
+
+    async function updateNote(id, text) {
+        text = text.trim();
+
+        if (!text) {
+            alert('La partition ne peut pas être vide.');
+            return;
+        }
+
+        let tx = db.transaction('notes', 'readwrite');
+        let notesStore = tx.objectStore('notes');
+        let note = await notesStore.get(id);
+
+        if (!note) {
+            alert('Cette partition n’existe plus.');
+            await listNotes();
+            return;
+        }
+
+        note.text = text;
+
+        await notesStore.put(note);
+        await tx.complete;
+        await listNotes();
+    }
+
+    async function exporterBase() {
+        let tx = db.transaction(['books', 'notes']);
+        let books = await tx.objectStore('books').getAll();
+        let notes = await tx.objectStore('notes').getAll();
+
+        let sauvegarde = {
+            books: books,
+            notes: notes
+        };
+
+        let texte = JSON.stringify(sauvegarde, null, 2);
+        let blob = new Blob([texte], { type: 'application/json' });
+        let url = URL.createObjectURL(blob);
+
+        let lien = document.createElement('a');
+        lien.href = url;
+        lien.download = 'partitionsDb.json';
+        lien.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    async function importerBase(event) {
+        let fichier = event.target.files[0];
+
+        if (!fichier) {
+            return;
+        }
+
+        if (!confirm('Importer cette sauvegarde et remplacer la base actuelle ?')) {
+            event.target.value = '';
+            return;
+        }
+
+        let texte = await fichier.text();
+        let sauvegarde = JSON.parse(texte);
+
+        let tx = db.transaction(['books', 'notes'], 'readwrite');
+
+        let booksStore = tx.objectStore('books');
+        let notesStore = tx.objectStore('notes');
+
+        await booksStore.clear();
+        await notesStore.clear();
+
+        for (let book of sauvegarde.books) {
+            await booksStore.put(book);
+        }
+
+        for (let note of sauvegarde.notes) {
+            await notesStore.put(note);
+        }
+
+        await tx.complete;
+
+        bookSelect.value = '';
+        notesElem.innerHTML = '';
+        await list();
+        await listBooksInSelect();
+        await listNotes();
+
+        event.target.value = '';
+        alert('Base importée avec succès.');
+    }
+
+    function scrollerLentement() {
+        const bloc = document.getElementById("notesElem");
+        const vitesse = document.getElementById("vitesse").value;
+        const delai = 220 - vitesse * 20;
+
+        clearInterval(defilement);
+
+        defilement = setInterval(function () {
+            bloc.scrollTop = bloc.scrollTop + 1;
+        }, delai);
+    }
+
+    function stopperScroll() {
+        clearInterval(defilement);
+    }
+
+    function changerVitesseScroll() {
+        if (defilement) {
+            scrollerLentement();
+        }
+    }
+
+
+    window.addEventListener('unhandledrejection', event => {
+        alert("Error: " + event.reason.message);
+    });
+
+</script>
