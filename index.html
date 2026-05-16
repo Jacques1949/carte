@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,8 +16,14 @@
     }
 
     h1 {
+      display: block;
       text-align: center;
       margin-bottom: 32px;
+    }
+
+    .h1 {
+      display: block;
+      text-align: center;
     }
 
     .cards-row {
@@ -26,7 +33,7 @@
       gap: 24px;
     }
 
-    .cards-row + .cards-row {
+    .cards-row+.cards-row {
       margin-top: 32px;
     }
 
@@ -49,9 +56,26 @@
     .links-grid p {
       margin: 0;
     }
+
+    @media (max-width: 700px) {
+      body {
+        margin: 0;
+        padding: 12px;
+      }
+
+      .cards-row {
+        grid-template-columns: 1fr;
+      }
+
+      .links-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
+
 <body>
+  <a class="h1" href="https://jacques1949.github.io/carte/">carte</a>
   <div class="cards-row">
     <div class="card">
       <h1>Projets</h1>
@@ -70,11 +94,11 @@
     <div class="card">
       <h1>Banques</h1>
       <div class="links-grid">
-      <p><a href="https://particuliers.sg.fr/">Société Générale</a></p>
-      <p><a href="https://clients.boursobank.com/connexion/webauthn">Boursorama</a></p>
-      <p><a href="https://www.banquepopulaire.fr/bpalc/">Banque Populaire</a></p>
-      <p><a href="https://sharinbox.sgmarkets.com/connexion">Sharinbox</a></p>
-      <p><a href="https://mma-webclient.connective-software.fr/contrat/23110/connexion">MMA</a></p>
+        <p><a href="https://particuliers.sg.fr/">Société Générale</a></p>
+        <p><a href="https://clients.boursobank.com/connexion/webauthn">Boursorama</a></p>
+        <p><a href="https://www.banquepopulaire.fr/bpalc/">Banque Populaire</a></p>
+        <p><a href="https://sharinbox.sgmarkets.com/connexion">Sharinbox</a></p>
+        <p><a href="https://mma-webclient.connective-software.fr/contrat/23110/connexion">MMA</a></p>
       </div>
     </div>
 
@@ -90,14 +114,16 @@
     <div class="card">
       <h1>Utilitaires</h1>
       <div class="links-grid">
-      <p><a href="https://chat.openai.com/">ChatGPT</a></p>
-      <p><a href="https://www.fdj.fr/">FDJ</a></p>
-      <p><a href="http://beausoleil.free.fr/tab.php">Brassens</a></p>
-      <p><a href="https://www.appicon.co/">AppIcon</a></p>
-      <p><a href="https://fr.javascript.info/json">JSON</a></p>
-      <p><a href="https://github.com">GitHub</a></p>
-      <p><a href="https://fr.javascript.info/js">JavaScript</a></p>
+        <p><a href="https://chat.openai.com/">ChatGPT</a></p>
+        <p><a href="https://www.fdj.fr/">FDJ</a></p>
+        <p><a href="http://beausoleil.free.fr/tab.php">Brassens</a></p>
+        <p><a href="https://www.appicon.co/">AppIcon</a></p>
+        <p><a href="https://fr.javascript.info/json">JSON</a></p>
+        <p><a href="https://github.com">GitHub</a></p>
+        <p><a href="https://fr.javascript.info/js">JavaScript</a></p>
+      </div>
     </div>
   </div>
 </body>
+
 </html>
