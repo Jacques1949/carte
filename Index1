@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liens utiles</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 24px;
+      color: #1f2937;
+      background: #f8fafc;
+    }
+
+    h1 {
+      display: block;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    p {
+      text-align: center;
+    }
+
+    .h1 {
+      display: block;
+      text-align: center;
+    }
+
+    .cards-row {
+      display: grid;
+      grid-template-columns: 3fr 2fr 1fr;
+
+      gap: 24px;
+    }
+
+    .cards-row+.cards-row {
+      margin-top: 32px;
+    }
+
+    .card {
+      background: yellow;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      /* box-sizing: border-box; garantit que le padding et la bordure sont inclus dans les dimensions totales de l’élément, ce qui facilite la gestion de la mise en page et évite les débordements inattendus. */
+      box-sizing: border-box;
+    }
+
+    .links-grid {
+      display: grid;
+      /* La grille de liens utilise 3 colonnes de largeur égale (), avec un espace de 12px entre les lignes et 20px entre les colonnes */
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px 20px;
+    }
+
+    .links-grid p {
+      margin: 0;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        margin: 0;
+        padding: 12px;
+      }
+
+      .cards-row {
+        grid-template-columns: 1fr;
+      }
+
+      .links-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="h1" href="https://jacques1949.github.io/carte/">carte</a>
+  <div class="cards-row">
+    <div class="card">
+      <h1>Projets</h1>
+      <p>serveur HTTPS: localhost:8443</p>
+      <div class="links-grid">
+        <p><a href="Camembert.html">Camembert</a></p>
+        <p><a href="calculateur.html">Calculateur</a></p>
+        <p><a href="Graphique.html">Graphique</a></p>
+        <p><a href="Resume.html">Résumé</a></p>
+        <p><a href="Resume1.html">Résumé 1</a></p>
+        <p><a href="Donnees.html">Données</a></p>
+        <p><a href="Select.html">Select</a></p>
+        <p><a href="Tips.html">Tips</a></p>
+        <p><a href="http://localhost/carte/partitionscopie2.html">Partitionscopie2</a></p>
+        <p><a href="http://localhost/carte/dividendes.html">Dividendes</a></p>
+        <p><a href="http://localhost/carte/CodeBarreQRCode.html">QRCode</a></p>
+        <p><a href="http://localhost/carte/EvolutionPoids.html">Evolution du poids</a></p>
+        <p><a href="http://localhost/carte/film.html">film</a></p>
+        <p><a href="http://localhost/carte/boutoncouleur.html">Cookies</a></p>
+        <p><a href="http://localhost/carte/Anagrammes.html">Anagrammes</a></p>
+        <p><a href="http://localhost/carte/reveil.html">reveil</a></p>
+        <p><a href="http://localhost/carte/Index1.html">reveil</a></p>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Banques</h1>
+      <div class="links-grid">
+        <p><a href="https://particuliers.sg.fr/">Société Générale</a></p>
+        <p><a href="https://clients.boursobank.com/connexion/webauthn">Boursorama</a></p>
+        <p><a href="https://www.banquepopulaire.fr/bpalc/">Banque Populaire</a></p>
+        <p><a href="https://sharinbox.sgmarkets.com/connexion">Sharinbox</a></p>
+        <p><a href="https://mma-webclient.connective-software.fr/contrat/23110/connexion">MMA</a></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Administration</h1>
+      <div class="links-grid">
+        <p><a href="https://www.particulier.urssaf.fr/#/accueil">Urssaf</a></p>
+        <p><a href="https://www.impots.gouv.fr/accueil">Impôts</a></p>
+      </div>
+    </div>
+  </div>
+  <div class="cards-row">
+    <div class="card">
+      <h1>Utilitaires</h1>
+      <div class="links-grid">
+        <p><a href="https://chat.openai.com/">ChatGPT</a></p>
+        <p><a href="https://www.fdj.fr/">FDJ</a></p>
+        <p><a href="http://beausoleil.free.fr/tab.php">Brassens</a></p>
+        <p><a href="https://www.appicon.co/">AppIcon</a></p>
+        <p><a href="https://fr.javascript.info/json">JSON</a></p>
+        <p><a href="https://github.com">GitHub</a></p>
+        <p><a href="https://fr.javascript.info/js">JavaScript</a></p>
+        <p><a href="https://tv.orange.fr/en-direct/tous-les-programmes">TV Orange</a></p>
+        <p><a href="https://chordify.net/fr/chords/yves-montand-songs/hollywood-chords">Hollywood Chords</a></p>
+        <p><a href="Anagrammes.html">Anagrammes</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
