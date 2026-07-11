@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        a:hover {
+            color: orange;
+            text-decoration: none;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        ul.a {
+            list-style-type: circle;
+            width: auto;
+        }
+
+        .lists {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+        }
+
+        #listes {
+            display: flex;
+            gap: 20px;
+        }
+
+        ul {
+            background: rebeccapurple;
+            padding: 20px;
+        }
+
+        ul li {
+            background: mistyrose;
+            color: darkblue;
+            margin: 5px;
+        }
+
+        .liste-liens .lien-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .categorie {
+            min-width: 260px;
+        }
+
+        .categorie h2 {
+            text-align: center;
+        }
+
+        .liste-liens {
+            width: auto;
+            max-height: auto;
+            overflow-y: auto;
+        }
+
+        .liste-liens li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: grab;
+            touch-action: pan-y;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+            visibility: hidden;
+        }
+
+        .actions button {
+            padding: 3px 6px;
+        }
+
+        .liste-liens li.actions-visible .actions {
+            visibility: visible;
+        }
+
+        .formulaire {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            justify-content: center;
+        }
+
+        .formulaire input,
+        .formulaire select,
+        .formulaire button {
+            padding: 8px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+
+    <div class="lists">
+        <div id="listes"></div>
+    </div>
+
+    <form id="formulaire" class="formulaire">
+        <select id="categorie">
+            <option value="utilitaires">Utilitaires</option>
+            <option value="banques">Banques</option>
+            <option value="divers">Divers</option>
+        </select>
+        <input id="intitule" type="text" placeholder="Intitule" required>
+        <input style="width: 400px;" id="adresse" type="text" placeholder="Adresse web" required>
+        <input id="icone" type="text" placeholder="Icone">
+        <button id="bouton-submit" type="submit">Ajouter</button>
+        <button id="bouton-annuler" type="button" style="display: none;">Annuler</button>
+    </form>
+
+</body>
+
+<script>
+    let liensParDefaut = {
+        utilitaires: [
+            {
+                intitule: "reveil",
+                adresse: "http://localhost/carte/reveil.html",
+                icone: "alarm"
+            },
+            {
+                intitule: "Camembert",
+                adresse: "Camembert.html"
+            },
+            {
+                intitule: "Evolution du poids",
+                adresse: "http://localhost/carte/EvolutionPoids.html"
+            }
+        ],
+        banques: [],
+        divers: []
+    };
+
+    let categories = ["utilitaires", "banques", "divers"];
+    let titresCategories = {
+        utilitaires: "Utilitaires",
+        banques: "Banques",
+        divers: "Divers"
+    };
+    let liensSauvegardes = JSON.parse(localStorage.getItem("liens"));
+    let variable = liensSauvegardes || liensParDefaut;
+
+    if (Array.isArray(variable)) {
+        variable = {
+            utilitaires: variable,
+            banques: [],
+            divers: []
+        };
+    }
+
+    categories.forEach(function (categorie) {
+        if (!variable[categorie]) {
+            variable[categorie] = [];
+        }
+    });
+
+    let indexModification = null;
+    let categorieModification = null;
+
+    let listes = document.getElementById("listes");
+    let formulaire = document.getElementById("formulaire");
+    let champCategorie = document.getElementById("categorie");
+    let champIntitule = document.getElementById("intitule");
+    let champAdresse = document.getElementById("adresse");
+    let champIcone = document.getElementById("icone");
+    let boutonSubmit = document.getElementById("bouton-submit");
+    let boutonAnnuler = document.getElementById("bouton-annuler");
+
+    function trierListes() {
+        categories.forEach(function (categorie) {
+            variable[categorie].sort(function (a, b) {
+                return a.intitule.localeCompare(b.intitule, "fr", { sensitivity: "base" });
+            });
+        });
+    }
+
+    function sauvegarderListe() {
+        trierListes();
+        localStorage.setItem("liens", JSON.stringify(variable));
+    }
+
+    function copierTexte(texte) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(texte);
+        } else {
+            let champTemporaire = document.createElement("textarea");
+            champTemporaire.value = texte;
+            document.body.appendChild(champTemporaire);
+            champTemporaire.select();
+            document.execCommand("copy");
+            document.body.removeChild(champTemporaire);
+        }
+    }
+
+    function afficherListe() {
+        trierListes();
+        listes.innerHTML = "";
+
+        categories.forEach(function (categorie) {
+            let bloc = document.createElement("div");
+            let titre = document.createElement("h2");
+            let liste = document.createElement("ul");
+
+            bloc.className = "categorie";
+            titre.textContent = titresCategories[categorie];
+            liste.className = "a liste-liens";
+
+            variable[categorie].forEach(function (element, index) {
+                let item = document.createElement("li");
+                let lien = document.createElement("a");
+                let actions = document.createElement("div");
+                let boutonModifier = document.createElement("button");
+                let boutonSupprimer = document.createElement("button");
+
+                lien.href = element.adresse;
+                lien.className = "lien-item";
+                lien.target = "_blank";
+                lien.addEventListener("click", function (event) {
+                    if (item.dataset.glissement === "true") {
+                        event.preventDefault();
+                        item.dataset.glissement = "false";
+                        return;
+                    }
+
+                    // if (element.adresse.startsWith("rtsp://")) {
+                    //     event.preventDefault();
+                    //     copierTexte(element.adresse);
+                    //     alert("Adresse RTSP copiee. Collez-la directement dans Safari ou VLC.");
+                    // }
+                });
+
+                if (element.icone) {
+                    let icone = document.createElement("i");
+                    icone.className = "material-icons";
+                    icone.textContent = element.icone;
+                    lien.appendChild(icone);
+                }
+
+                lien.appendChild(document.createTextNode(element.intitule));
+
+                actions.className = "actions";
+
+                boutonModifier.type = "button";
+                boutonModifier.textContent = "Modifier";
+                boutonModifier.addEventListener("click", function () {
+                    indexModification = index;
+                    categorieModification = categorie;
+                    champCategorie.value = categorie;
+                    champIntitule.value = element.intitule;
+                    champAdresse.value = element.adresse;
+                    champIcone.value = element.icone || "";
+                    boutonSubmit.textContent = "Enregistrer";
+                    boutonAnnuler.style.display = "inline-block";
+                });
+
+                boutonSupprimer.type = "button";
+                boutonSupprimer.textContent = "Supprimer";
+                boutonSupprimer.addEventListener("click", function () {
+                    variable[categorie].splice(index, 1);
+                    sauvegarderListe();
+                    afficherListe();
+                });
+
+                actions.appendChild(boutonModifier);
+                actions.appendChild(boutonSupprimer);
+
+                item.appendChild(lien);
+                item.appendChild(actions);
+                activerGlissement(item);
+                liste.appendChild(item);
+            });
+
+            bloc.appendChild(titre);
+            bloc.appendChild(liste);
+            listes.appendChild(bloc);
+        });
+    }
+
+    function masquerActions() {
+        document.querySelectorAll(".liste-liens li").forEach(function (item) {
+            item.classList.remove("actions-visible");
+        });
+    }
+
+    function activerGlissement(item) {
+        let departX = 0;
+        let departY = 0;
+
+        item.addEventListener("pointerdown", function (event) {
+            departX = event.clientX;
+            departY = event.clientY;
+            item.dataset.glissement = "false";
+        });
+
+        item.addEventListener("pointerup", function (event) {
+            let distanceX = event.clientX - departX;
+            let distanceY = event.clientY - departY;
+
+            if (Math.abs(distanceX) > 50 && Math.abs(distanceX) > Math.abs(distanceY)) {
+                item.dataset.glissement = "true";
+                masquerActions();
+                item.classList.add("actions-visible");
+            }
+        });
+    }
+
+    formulaire.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        let nouvelElement = {
+            intitule: champIntitule.value,
+            adresse: champAdresse.value
+        };
+        let categorie = champCategorie.value;
+
+        if (champIcone.value) {
+            nouvelElement.icone = champIcone.value;
+        }
+
+        if (indexModification === null) {
+            variable[categorie].push(nouvelElement);
+        } else {
+            variable[categorieModification].splice(indexModification, 1);
+            variable[categorie].push(nouvelElement);
+            indexModification = null;
+            categorieModification = null;
+            boutonSubmit.textContent = "Ajouter";
+            boutonAnnuler.style.display = "none";
+        }
+
+        sauvegarderListe();
+        afficherListe();
+        formulaire.reset();
+    });
+
+    boutonAnnuler.addEventListener("click", function () {
+        indexModification = null;
+        categorieModification = null;
+        formulaire.reset();
+        boutonSubmit.textContent = "Ajouter";
+        boutonAnnuler.style.display = "none";
+    });
+
+    listes.addEventListener("mouseleave", function () {
+        masquerActions();
+    });
+
+    afficherListe();
+</script>
+
+</html>
